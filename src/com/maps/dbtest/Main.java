@@ -13,7 +13,7 @@ public class Main {
         final int PORT = 6969;
         ServerSocket serverSocket = null;
         String connectionURL = "";
-        File file = new File("URL.txt");
+        File file = new File("URL.zaar");
         try {
             Scanner sc = new Scanner(file);
 
