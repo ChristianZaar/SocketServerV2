@@ -1,4 +1,4 @@
-package com.maps.dbtest;
+package com.example.happening;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -74,8 +74,8 @@ public class SocketConnection implements Runnable {
 
     private void addEvent()throws IOException, ClassNotFoundException{
 
-            Event e = (Event)oIS.readObject();
-            dA.addEvent((Event)e);
+            Happening happening = (Happening)oIS.readObject();
+            dA.addHappening(happening);
     }
 
 }
