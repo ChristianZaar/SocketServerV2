@@ -1,9 +1,13 @@
 package com.example.happening;
 
+import com.example.happening.DbStuff.GetAttendRequest;
+import com.example.happening.DbStuff.GetHappeningsRequest;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.time.LocalDateTime;
 
 public class SocketConnection implements Runnable {
 
@@ -29,6 +33,8 @@ public class SocketConnection implements Runnable {
                 //Run request
                 runCommand((String)o);
             }
+            oOS.writeObject(dA.getRetVal());
+            oOS.flush();
 
         }
         catch (IOException e){
@@ -63,19 +69,95 @@ public class SocketConnection implements Runnable {
 
     }
 
+    /**
+     * Run command receive on socket
+     * @param cmd
+     * @throws IOException
+     * @throws ClassNotFoundException
+     */
     private void runCommand(String cmd) throws IOException,ClassNotFoundException{
 
         switch(cmd){
-            case "addEventToDb":
-                addEvent();
+
+            case "addHappeningToDb"://Adds Happening to database
+                addHappening();
                 break;
+
+            case "getHappenings"://Gets all happenings
+                getHappenings();
+                break;
+
+            case "addAttend":
+                addAttend();
+                break;
+
+            case "deleteAttend":
+                deleteAttend();
+                break;
+
+            case "addComment":
+                addComment();
+                break;
+
+            case "getComments":
+                //getComments();
+                break;
+
+                default:
+                    System.out.println("Unknown request."+ cmd);
         }
     }
 
-    private void addEvent()throws IOException, ClassNotFoundException{
+    /**
+     * Add Happening
+     * @throws IOException
+     * @throws ClassNotFoundException
+     */
+    private void addHappening()throws IOException, ClassNotFoundException{
 
-            Happening happening = (Happening)oIS.readObject();
-            dA.addHappening(happening);
+        Happening happening = (Happening)oIS.readObject();
+        dA.addHappening(happening);
+
     }
 
+    /**Get all happenings
+     * Get all hapenings
+     * @return ArrayList<Happening>
+     */
+    private void getHappenings() throws IOException,ClassNotFoundException{
+        GetHappeningsRequest getHReq = (GetHappeningsRequest)oIS.readObject();
+
+        oOS.writeObject(dA.getHappenings(
+                getHReq.getUserName(),
+                LocalDateTime.parse(getHReq.getDateStart()+"T00:00"),
+                LocalDateTime.parse(getHReq.getDateEnd()+"T23:59")));
+        oOS.flush();
+    }
+
+    /**
+     * Adds attend to db
+     * @throws IOException
+     * @throws ClassNotFoundException
+     */
+    private void addAttend() throws IOException, ClassNotFoundException{
+        dA.addAttend((GetAttendRequest)oIS.readObject());
+    }
+
+    /**
+     * Delete attend from db
+     * @throws IOException
+     * @throws ClassNotFoundException
+     */
+    private void deleteAttend() throws IOException, ClassNotFoundException{
+        dA.deleteAttend((GetAttendRequest)oIS.readObject());
+    }
+
+    /**
+     * Add comment
+     * @throws IOException
+     * @throws ClassNotFoundException
+     */
+    private void addComment()throws IOException, ClassNotFoundException{
+        //dA.addComment((GetAttendRequest)oIS.readObject());
+    }
 }

@@ -5,11 +5,15 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Scanner;
+import java.time.LocalDateTime;
 
 public class Main {
 
     public static void main(String[] args){
+
         final int PORT = 6969;
         ServerSocket serverSocket = null;
         String connectionURL = "";
@@ -32,6 +36,7 @@ public class Main {
             System.err.println("Error in creation of the server socket");
             System.exit(0);
         }
+
         while (true) {
             try {       // listen for a connection
                 Socket socket = serverSocket.accept();
