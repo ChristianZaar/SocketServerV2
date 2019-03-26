@@ -172,8 +172,6 @@ public class DbAccess {
 
     public void addAttend(GetAttendRequest attendRequest){
 
-        System.out.println("addAttend "+attendRequest.getHappeningId() + " " + attendRequest.getName());
-
         String query = "INSERT INTO happening.attend (happening_idEvent, user_iduser)  select ?, user.iduser from user where user.name = ? ;";
 
         if (checkConnection()) {
@@ -225,6 +223,72 @@ public class DbAccess {
                 retVal = ReturnValue.GENERAL_FAILURE;
             }
         }
+    }
+
+    public void addComment(Comment comment){
+
+        String query = "INSERT INTO happening.comments (user_iduser, event_idEvent, comment, date_time) select iduser, ?, ?,now() from user where user.name = ?;";
+
+        if (checkConnection()) {
+            try (PreparedStatement pst = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
+
+                pst.setInt(1, comment.getHappeningId());
+                pst.setString(2, comment.getComment());
+                pst.setString(3, comment.getUserName());
+                int i = pst.executeUpdate();
+
+                if( i<1 && !nameTested){
+                    if(!checkUser(comment.getUserName())){
+                        addComment(comment);
+                    }
+                }
+                else if(1 > 0){
+                    retVal = ReturnValue.SUCCESS;
+                }
+                else{
+                    retVal = ReturnValue.GENERAL_FAILURE; //Success
+                }
+
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                retVal = ReturnValue.GENERAL_FAILURE;
+            }
+        }
+    }
+
+    public ArrayList<Comment> getComments(Happening happening){
+
+        ArrayList<Comment> comments = new ArrayList<>();
+        String query = "SELECT comments.event_idEvent , user.name, comments.comment, comments.date_time from comments INNER JOIN user ON comments.user_iduser = user.iduser where event_idEvent = ?;";
+
+        if (checkConnection()) {
+            try (PreparedStatement pst = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
+
+
+                pst.setInt(1, happening.getId());
+                ResultSet rs = pst.executeQuery();
+
+                while (rs.next()) {
+
+                    LocalDateTime d = rs.getTimestamp(4).toLocalDateTime();
+                    String date = d.toLocalDate().toString();
+                    String time = d.toLocalTime().toString();
+
+                    Comment comment = new Comment(
+                            rs.getInt(1),       //Event id
+                            rs.getString(2),    //User name
+                            rs.getString(3),    //Title
+                            date,                           //date
+                            time);                           //time//Attending
+                    comments.add(comment);
+                }
+                retVal = ReturnValue.SUCCESS;
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                retVal = ReturnValue.GENERAL_FAILURE;
+            }
+        }
+        return comments;
     }
 
     private boolean checkUser(String name) {

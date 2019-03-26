@@ -100,7 +100,7 @@ public class SocketConnection implements Runnable {
                 break;
 
             case "getComments":
-                //getComments();
+                getComments();
                 break;
 
                 default:
@@ -158,6 +158,10 @@ public class SocketConnection implements Runnable {
      * @throws ClassNotFoundException
      */
     private void addComment()throws IOException, ClassNotFoundException{
-        //dA.addComment((GetAttendRequest)oIS.readObject());
+        dA.addComment((Comment)oIS.readObject());
+    }
+
+    private void getComments()throws IOException, ClassNotFoundException{
+        oOS.writeObject(dA.getComments((Happening)oIS.readObject()));
     }
 }
