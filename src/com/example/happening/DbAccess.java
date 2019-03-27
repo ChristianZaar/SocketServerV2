@@ -1,13 +1,14 @@
 package com.example.happening;
-
 import com.example.happening.DbStuff.GetAttendRequest;
 import com.example.happening.DbStuff.ReturnValue;
 import com.mysql.jdbc.Connection;
-
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 
+/**
+ * Connects to DB and performs queries
+ */
 public class DbAccess {
 
     private ReturnValue retVal = ReturnValue.GENERAL_FAILURE; //1 = Success, -1 = General failure, -2 = No connection to DB
@@ -21,6 +22,9 @@ public class DbAccess {
         connector();
     }
 
+    /**
+     * Connects to db
+     */
     private final void connector() {
         try {
             connection = (Connection) DriverManager.getConnection(connectionURL);
@@ -33,6 +37,10 @@ public class DbAccess {
         }
     }
 
+    /**
+     * Checks if connection to db is ok
+     * @return
+     */
     private boolean checkConnection(){
         if(connection!=null){
             try {
@@ -67,8 +75,8 @@ public class DbAccess {
     }
 
     /**
-     * Gets Eventlist from db
-     * @return
+     * Gets Happenings from db
+     * @return ArrayList<ArrayList<Happening>> lists of Non attending happenings(0) and one with attending events(1)
      */
     public ArrayList<ArrayList<Happening>> getHappenings(String userName,LocalDateTime startDate, LocalDateTime endDate){
 
@@ -132,7 +140,7 @@ public class DbAccess {
 
     /**
      * Adds event to database
-     * @param happening
+     * @param happening Hapening to add to database
      */
     public void addHappening(Happening happening){
 
@@ -170,6 +178,10 @@ public class DbAccess {
         }
     }
 
+    /**
+     * Add attend to happening
+     * @param attendRequest GetAttendRequest parameter class that defines wich happening and wich user to attend
+     */
     public void addAttend(GetAttendRequest attendRequest){
 
         String query = "INSERT INTO happening.attend (happening_idEvent, user_iduser)  select ?, user.iduser from user where user.name = ? ;";
@@ -200,6 +212,10 @@ public class DbAccess {
         }
     }
 
+    /**
+     * Delete Attend from hapening
+     * @param attendRequest GetAttendRequest parameter class that defines wich happening and wich user to unattend
+     */
     public void deleteAttend(GetAttendRequest attendRequest ){
 
         String query = "DELETE FROM attend WHERE `happening_idEvent`= ? and (select user.iduser from user where user.name = ?);";
@@ -225,6 +241,10 @@ public class DbAccess {
         }
     }
 
+    /**
+     * Add comment to DB
+     * @param comment
+     */
     public void addComment(Comment comment){
 
         String query = "INSERT INTO happening.comments (user_iduser, event_idEvent, comment, date_time) select iduser, ?, ?,now() from user where user.name = ?;";
@@ -256,10 +276,15 @@ public class DbAccess {
         }
     }
 
+    /**
+     * Get commetnts for happening
+     * @param happening Happening to collect comments for
+     * @return
+     */
     public ArrayList<Comment> getComments(Happening happening){
 
         ArrayList<Comment> comments = new ArrayList<>();
-        String query = "SELECT comments.event_idEvent , user.name, comments.comment, comments.date_time from comments INNER JOIN user ON comments.user_iduser = user.iduser where event_idEvent = ?;";
+        String query = "SELECT comments.event_idEvent , user.name, comments.comment, comments.date_time from comments INNER JOIN user ON comments.user_iduser = user.iduser where event_idEvent = ? order by comments.date_time;";
 
         if (checkConnection()) {
             try (PreparedStatement pst = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
@@ -291,6 +316,42 @@ public class DbAccess {
         return comments;
     }
 
+    /**
+     * Get attenders
+     * @param happening Happening wich id is used for searching attenders
+     * @return
+     */
+    public ArrayList<String> getAttenders(Happening happening){
+
+        ArrayList<String> list = new ArrayList<>();
+
+        String query = "SELECT user.name from user inner join attend on iduser = attend.user_iduser where attend.happening_idEvent = ?;";
+
+        if (checkConnection()) {
+            try (PreparedStatement pst = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
+
+
+                pst.setInt(1, happening.getId());
+                ResultSet rs = pst.executeQuery();
+
+                while (rs.next()) {
+                    list.add(rs.getString(1));
+                }
+                retVal = ReturnValue.SUCCESS;
+
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                retVal = ReturnValue.GENERAL_FAILURE;
+            }
+        }
+        return list;
+    }
+
+    /**
+     * Checks if user exists
+     * @param name user name to look for
+     * @return
+     */
     private boolean checkUser(String name) {
         nameTested = true;
         String query = "SELECT user.iduser from happening.user where user.name = ?";
@@ -316,6 +377,10 @@ public class DbAccess {
         return exists;
     }
 
+    /**
+     * Add user to db
+     * @param name user name to add
+     */
     public void addUser(String name){
         String query = "INSERT INTO happening.user (name) VALUES (?);";
         if (checkConnection()) {
@@ -330,6 +395,10 @@ public class DbAccess {
         }
     }
 
+    /**
+     * Returnvalue of operation performed
+     * @return Returnvalue of operation performed indicates status of operation
+     */
     public ReturnValue getRetVal() {
         return retVal;
     }

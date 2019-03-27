@@ -1,5 +1,6 @@
 package com.example.happening;
 
+import com.example.happening.DbStuff.Cmd;
 import com.example.happening.DbStuff.GetAttendRequest;
 import com.example.happening.DbStuff.GetHappeningsRequest;
 
@@ -29,9 +30,9 @@ public class SocketConnection implements Runnable {
             oIS = new ObjectInputStream(socket.getInputStream());
             oOS = new ObjectOutputStream(socket.getOutputStream());
             Object o = oIS.readObject();
-            if(o instanceof String){
+            if(o instanceof Cmd){
                 //Run request
-                runCommand((String)o);
+                runCommand((Cmd)o);
             }
             oOS.writeObject(dA.getRetVal());
             oOS.flush();
@@ -75,32 +76,36 @@ public class SocketConnection implements Runnable {
      * @throws IOException
      * @throws ClassNotFoundException
      */
-    private void runCommand(String cmd) throws IOException,ClassNotFoundException{
+    private void runCommand(Cmd cmd) throws IOException,ClassNotFoundException{
 
         switch(cmd){
 
-            case "addHappeningToDb"://Adds Happening to database
+            case ADD_HAPPENING_TO_DB://Adds Happening to database
                 addHappening();
                 break;
 
-            case "getHappenings"://Gets all happenings
+            case GET_HAPPENINGS://Gets all happenings
                 getHappenings();
                 break;
 
-            case "addAttend":
+            case ADD_ATTEND:
                 addAttend();
                 break;
 
-            case "deleteAttend":
+            case DELETE_ATTEND:
                 deleteAttend();
                 break;
 
-            case "addComment":
+            case ADD_COMMENT:
                 addComment();
                 break;
 
-            case "getComments":
+            case GET_COMMENTS:
                 getComments();
+                break;
+
+            case GET_ATTENDERS:
+                getAttenders();
                 break;
 
                 default:
@@ -161,7 +166,22 @@ public class SocketConnection implements Runnable {
         dA.addComment((Comment)oIS.readObject());
     }
 
+    /**
+     * Get Comments from from db
+     * @throws IOException
+     * @throws ClassNotFoundException
+     */
     private void getComments()throws IOException, ClassNotFoundException{
         oOS.writeObject(dA.getComments((Happening)oIS.readObject()));
     }
+
+    /**
+     * Get attenders from db
+     * @throws IOException
+     * @throws ClassNotFoundException
+     */
+    private void getAttenders()throws IOException, ClassNotFoundException{
+        oOS.writeObject(dA.getAttenders((Happening)oIS.readObject()));
+    }
+
 }
